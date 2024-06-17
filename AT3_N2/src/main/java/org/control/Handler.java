@@ -1,4 +1,5 @@
 package org.control;
+
 import model.*;
 
 import java.io.BufferedReader;
@@ -22,7 +23,8 @@ public class Handler implements Runnable {
             String requisicaoCliente;
             while ((requisicaoCliente = entrada.readLine()) != null) {
                 String resposta = processarRequisicao(requisicaoCliente);
-                saida.println(resposta);
+                int respostaLength = resposta.length();
+                saida.println(respostaLength + "#" + resposta); // Prefixa o comprimento da resposta
             }
         } catch (IOException e) {
             e.printStackTrace();

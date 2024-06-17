@@ -20,6 +20,7 @@ public class Client {
             boolean running = true;
 
             while (running) {
+                // Display menu
                 System.out.println("Menu:");
                 System.out.println("1. Listar livros");
                 System.out.println("2. Alugar livro");
@@ -32,31 +33,21 @@ public class Client {
                 switch (choice) {
                     case 1:
                         out.println("listar");
-                        printResponse(in);
                         break;
                     case 2:
-                        boolean bookRented = false;
-                        while (!bookRented) {
-                            System.out.print("Digite o nome do livro para alugar: ");
-                            String rentBook = scanner.nextLine();
-                            out.println("alugar#" + rentBook);
-                            bookRented = processRentReturnResponse(in);
-                        }
+                        System.out.print("Digite o nome do livro para alugar: ");
+                        String rentBook = scanner.nextLine();
+                        out.println("alugar#" + rentBook);
                         break;
                     case 3:
-                        boolean bookReturned = false;
-                        while (!bookReturned) {
-                            System.out.print("Digite o nome do livro para devolver: ");
-                            String returnBook = scanner.nextLine();
-                            out.println("devolver#" + returnBook);
-                            bookReturned = processRentReturnResponse(in);
-                        }
+                        System.out.print("Digite o nome do livro para devolver: ");
+                        String returnBook = scanner.nextLine();
+                        out.println("devolver#" + returnBook);
                         break;
                     case 4:
                         System.out.print("Digite os detalhes do livro (autor,titulo,genero,exemplares): ");
                         String bookDetails = scanner.nextLine();
                         out.println("cadastrar#" + bookDetails);
-                        printResponse(in);
                         break;
                     case 5:
                         out.println("sair");
@@ -64,7 +55,11 @@ public class Client {
                         break;
                     default:
                         System.out.println("Opção inválida. Tente novamente.");
+                        continue; // Skip reading from the server if invalid option
                 }
+
+                // Print server response before showing the menu again
+                printResponse(in);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -72,23 +67,16 @@ public class Client {
     }
 
     private static void printResponse(BufferedReader in) throws IOException {
-        String responseLine;
-        while ((responseLine = in.readLine()) != null && !responseLine.isEmpty()) {
-            System.out.println(responseLine);
-        }
-    }
+        String responseLine = in.readLine();
+        if (responseLine != null) {
+            String[] parts = responseLine.split("#", 2);
+            int length = Integer.parseInt(parts[0]);
+            String response = parts[1];
 
-    private static boolean processRentReturnResponse(BufferedReader in) throws IOException {
-        String responseLine;
-        boolean success = false;
-        while ((responseLine = in.readLine()) != null && !responseLine.isEmpty()) {
-            System.out.println(responseLine);
-            if (responseLine.contains("sucesso") || responseLine.contains("renting") || responseLine.contains("returning")) {
-                success = true;
-            } else if (responseLine.contains("não encontrado") || responseLine.contains("não disponível")) {
-                System.out.println("Livro não encontrado ou não disponível. Tente novamente.");
+            while (response.length() < length) {
+                response += in.readLine() + "\n";
             }
+            System.out.println(response.trim());
         }
-        return success;
     }
 }

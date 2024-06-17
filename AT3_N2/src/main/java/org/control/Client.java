@@ -28,60 +28,75 @@ public class Client {
             // Loop principal do cliente
             while (running) {
                 // Exibe o menu de opções para o usuário
-                System.out.println("Menu:");
-                System.out.println("1. Listar livros");
-                System.out.println("2. Alugar livro");
-                System.out.println("3. Devolver livro");
-                System.out.println("4. Cadastrar livro");
-                System.out.println("5. Sair");
-                System.out.print("Escolha uma opção: ");
+                displayMenu();
+
+                // Lê a escolha do usuário
                 int choice = Integer.parseInt(scanner.nextLine());
 
                 // Processa a escolha do usuário
-                switch (choice) {
-                    case 1:
-                        // Envia comando de listagem de livros para o servidor
-                        out.println("listar");
-                        break;
-                    case 2:
-                        // Solicita o nome do livro para alugar
-                        System.out.print("Digite o nome do livro para alugar: ");
-                        String rentBook = scanner.nextLine();
-                        // Envia comando de aluguel de livro para o servidor
-                        out.println("alugar#" + rentBook);
-                        break;
-                    case 3:
-                        // Solicita o nome do livro para devolver
-                        System.out.print("Digite o nome do livro para devolver: ");
-                        String returnBook = scanner.nextLine();
-                        // Envia comando de devolução de livro para o servidor
-                        out.println("devolver#" + returnBook);
-                        break;
-                    case 4:
-                        // Solicita os detalhes do livro para cadastrar
-                        System.out.print("Digite os detalhes do livro (autor,titulo,genero,exemplares): ");
-                        String bookDetails = scanner.nextLine();
-                        // Envia comando de cadastro de livro para o servidor
-                        out.println("cadastrar#" + bookDetails);
-                        break;
-                    case 5:
-                        // Envia comando de sair para o servidor e termina o loop
-                        out.println("sair");
-                        running = false;
-                        break;
-                    default:
-                        // Informa ao usuário que a opção é inválida e pede para tentar novamente
-                        System.out.println("Opção inválida. Tente novamente.");
-                        continue; // Pula a leitura da resposta do servidor se a opção for inválida
-                }
-
-                // Imprime a resposta do servidor antes de mostrar o menu novamente
-                printResponse(in);
+                running = processChoice(choice, out, in, scanner);
             }
         } catch (Exception e) {
             // Trata exceções e imprime o stack trace
             e.printStackTrace();
         }
+    }
+
+    // Método para exibir o menu de opções
+    private static void displayMenu() {
+        System.out.println("Menu:");
+        System.out.println("1. Listar livros");
+        System.out.println("2. Alugar livro");
+        System.out.println("3. Devolver livro");
+        System.out.println("4. Cadastrar livro");
+        System.out.println("5. Sair");
+        System.out.print("Escolha uma opção: ");
+    }
+
+    // Método para processar a escolha do usuário
+    private static boolean processChoice(int choice, PrintWriter out, BufferedReader in, Scanner scanner) throws IOException {
+        switch (choice) {
+            case 1:
+                // Envia comando de listagem de livros para o servidor
+                out.println("listar");
+                break;
+            case 2:
+                // Lista livros antes de solicitar o nome do livro para alugar
+                listBooks(out, in);
+                String rentBook = promptForInput("Digite o nome do livro para alugar: ", scanner);
+                out.println("alugar#" + rentBook);
+                break;
+            case 3:
+                // Lista livros antes de solicitar o nome do livro para devolver
+                listBooks(out, in);
+                String returnBook = promptForInput("Digite o nome do livro para devolver: ", scanner);
+                out.println("devolver#" + returnBook);
+                break;
+            case 4:
+                // Lista livros antes de solicitar os detalhes do novo livro
+                listBooks(out, in);
+                String bookDetails = promptForInput("Digite os detalhes do livro (autor,titulo,genero,exemplares): ", scanner);
+                out.println("cadastrar#" + bookDetails);
+                break;
+            case 5:
+                // Envia comando de sair para o servidor e retorna false para terminar o loop
+                out.println("sair");
+                return false;
+            default:
+                // Informa ao usuário que a opção é inválida e pede para tentar novamente
+                System.out.println("Opção inválida. Tente novamente.");
+                return true; // Pula a leitura da resposta do servidor se a opção for inválida
+        }
+
+        // Imprime a resposta do servidor antes de mostrar o menu novamente
+        printResponse(in);
+        return true; // Continua o loop
+    }
+
+    // Método auxiliar para solicitar entrada do usuário
+    private static String promptForInput(String prompt, Scanner scanner) {
+        System.out.print(prompt);
+        return scanner.nextLine();
     }
 
     // Método para imprimir a resposta do servidor
@@ -102,4 +117,33 @@ public class Client {
             System.out.println(response.trim());
         }
     }
+
+    // Método para imprimir a resposta do servidor com formatação específica para livros
+    private static void printFormattedResponse(BufferedReader in) throws IOException {
+        String responseLine;
+        int bookCount = 1;
+        while ((responseLine = in.readLine()) != null && !responseLine.isEmpty()) {
+            // Assume que cada linha é um livro com campos separados por vírgula: autor,titulo,genero,exemplares
+            String[] bookDetails = responseLine.split(",");
+            if (bookDetails.length == 4) {
+                System.out.println("Livro " + bookCount + ":");
+                System.out.println("Autor: " + bookDetails[0].trim());
+                System.out.println("Título: " + bookDetails[1].trim());
+                System.out.println("Gênero: " + bookDetails[2].trim());
+                System.out.println("Exemplares: " + bookDetails[3].trim());
+                System.out.println("----------------------------");
+                bookCount++;
+            }
+        }
+    }
+
+    // Método para listar livros antes de solicitar uma ação do usuário
+    private static void listBooks(PrintWriter out, BufferedReader in) throws IOException {
+        out.println("listar");
+        System.out.println("Lista de Livros Disponíveis:");
+        System.out.println("----------------------------");
+        printFormattedResponse(in);
+        System.out.println("----------------------------");
+    }
 }
+
